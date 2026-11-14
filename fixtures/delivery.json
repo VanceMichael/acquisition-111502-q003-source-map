@@ -1,0 +1,23 @@
+{
+  "deliveryId": "delivery-1",
+  "revision": "r1",
+  "roots": [
+    {
+      "href": "/files/app.map"
+    }
+  ],
+  "resources": [
+    {
+      "href": "/files/app.map",
+      "name": "app.map"
+    },
+    {
+      "href": "/files/tail.map",
+      "name": "tail.map"
+    },
+    {
+      "href": "/files/b.ts.raw",
+      "name": "b.ts.raw"
+    }
+  ]
+}

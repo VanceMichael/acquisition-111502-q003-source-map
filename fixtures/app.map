@@ -1,0 +1,31 @@
+{
+  "version": 3,
+  "file": "app.js",
+  "sections": [
+    {
+      "offset": {
+        "line": 0,
+        "column": 3
+      },
+      "map": {
+        "version": 3,
+        "sourceRoot": "../src/",
+        "sources": [
+          "a.ts"
+        ],
+        "sourcesContent": [
+          "export const a = 1;\nexport const b = 2;"
+        ],
+        "names": [],
+        "mappings": "AAAA,K;AACA"
+      }
+    },
+    {
+      "offset": {
+        "line": 2,
+        "column": 5
+      },
+      "url": "/maps/tail.map"
+    }
+  ]
+}

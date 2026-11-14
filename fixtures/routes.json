@@ -1,0 +1,27 @@
+{
+  "/files/app.map": {
+    "file": "app.map",
+    "mediaType": "application/json"
+  },
+  "/files/tail.map": {
+    "file": "tail.map",
+    "mediaType": "application/json"
+  },
+  "/files/b.ts.raw": {
+    "file": "b.ts.raw",
+    "mediaType": "application/octet-stream"
+  },
+  "/deliveries": {
+    "file": "delivery.json",
+    "mediaType": "application/json"
+  },
+  "/maps/tail.map": {
+    "file": "tail.map",
+    "mediaType": "application/json",
+    "availableAt": "complete"
+  },
+  "/src/b.ts": {
+    "file": "b.ts.raw",
+    "mediaType": "text/plain"
+  }
+}

@@ -1,0 +1,28 @@
+[
+  {
+    "kind": "mapped-position",
+    "value": {
+      "generatedLine": 1,
+      "generatedColumn": 3,
+      "sourcePath": "/src/a.ts",
+      "originalLine": 1,
+      "originalColumn": 0
+    }
+  },
+  {
+    "kind": "mapped-position",
+    "value": {
+      "generatedLine": 3,
+      "generatedColumn": 5,
+      "sourcePath": "/src/b.ts",
+      "originalLine": 1
+    }
+  },
+  {
+    "kind": "unmapped-range",
+    "value": {
+      "generatedLine": 1,
+      "generatedColumn": 8
+    }
+  }
+]
