@@ -7,6 +7,15 @@ try {
   console.log(JSON.stringify({ acquisition: result }, null, 2));
   const collection = await context.call('/collections/demo');
   console.log(JSON.stringify(collection.value, null, 2));
+  if (collection.value.records.some(record => record.kind === 'mapped-position')) {
+    const starts = collection.value.records
+      .filter(record => record.kind === 'mapped-position')
+      .map(record => [record.value.generatedLine, record.value.generatedColumn])
+      .sort((left, right) => left[0] - right[0] || left[1] - right[1]);
+    for (const [line, column] of starts) {
+      console.log(JSON.stringify((await context.call('/collections/demo/positions?line=' + line + '&column=' + column)).value, null, 2));
+    }
+  }
   for (const receiptId of collection.value.receiptIds) {
     console.log(JSON.stringify((await context.call('/receipts/' + receiptId)).value, null, 2));
   }

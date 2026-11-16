@@ -1,6 +1,7 @@
 import { createServer } from 'node:http';
-import { Archive } from './archive.mjs';
-import { retrieve } from './transport.mjs';
+import { Archive, identifier } from './archive.mjs';
+import { acquire } from './acquisition.mjs';
+import { explainPosition } from './positions.mjs';
 import { summarize } from './summary.mjs';
 
 export function json(response, status, value) {
@@ -35,6 +36,17 @@ export async function createService({ directory, allowedOrigin }) {
       if (collection && request.method === 'GET') return json(response, 200, await archive.collection(collection[1]));
       const records = url.pathname.match(/^\/collections\/([a-zA-Z0-9_.-]+)\/records$/);
       if (records && request.method === 'POST') return json(response, 201, await archive.addRecord(records[1], await requestBody(request)));
+      const positions = url.pathname.match(/^\/collections\/([a-zA-Z0-9_.-]+)\/positions$/);
+      if (positions && request.method === 'GET') {
+        identifier(positions[1]);
+        const line = url.searchParams.get('line');
+        const column = url.searchParams.get('column');
+        if (line === null || column === null) throw Object.assign(new Error('missing_position'), { status: 400 });
+        const collection = await archive.collection(positions[1]);
+        const explained = explainPosition(collection.records, Number(line), Number(column));
+        return json(response, 200, { collectionId: positions[1], ...explained,
+          completeness: collection.explanation || { state: 'unknown', complete: false } });
+      }
       const blob = url.pathname.match(/^\/receipts\/([a-f0-9]{64})\/body$/);
       if (blob && request.method === 'GET') {
         const receipt = await archive.receipt(blob[1]);
@@ -53,10 +65,10 @@ export async function createService({ directory, allowedOrigin }) {
       if (request.method === 'POST' && url.pathname === '/acquisitions') {
         const body = await requestBody(request);
         if (typeof body.entry !== 'string') throw Object.assign(new Error('missing_entry'), { status: 400 });
-        const result = await retrieve(body.entry, allowedOrigin);
-        const receipt = await archive.receive({ collectionId: body.collectionId, sourceKey: body.entry, revision: result.revision,
-          mediaType: result.mediaType, bytes: result.bytes, summary: summarize(result.bytes, result.mediaType) });
-        return json(response, 201, { collectionId: body.collectionId, receiptIds: [receipt.receiptId] });
+        const collectionId = body.collectionId;
+        if (typeof collectionId !== 'string') throw Object.assign(new Error('missing_collection'), { status: 400 });
+        const result = await acquire({ archive, collectionId, entry: body.entry, allowedOrigin });
+        return json(response, 201, result);
       }
       return json(response, 404, { error: 'not_found' });
     } catch (error) {

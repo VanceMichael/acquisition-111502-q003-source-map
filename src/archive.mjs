@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile, rename, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
+import { mergeExplanations } from './explanation.mjs';
 
 export function digest(bytes) {
   return createHash('sha256').update(bytes).digest('hex');
@@ -40,10 +41,12 @@ export class Archive {
   async collection(collectionId) {
     identifier(collectionId);
     try {
-      return JSON.parse(await readFile(join(this.directory, 'collections', collectionId + '.json'), 'utf8'));
+      const value = JSON.parse(await readFile(join(this.directory, 'collections', collectionId + '.json'), 'utf8'));
+      return { ...value, records: value.records || [], issues: value.issues || [],
+        receiptIds: value.receiptIds || [], explanation: value.explanation || null };
     } catch (error) {
       if (error.code !== 'ENOENT') throw error;
-      return { collectionId, receiptIds: [], records: [], issues: [] };
+      return { collectionId, receiptIds: [], records: [], issues: [], explanation: null };
     }
   }
 
@@ -118,6 +121,36 @@ export class Archive {
       if (!match) collection.records.push(record);
       await this.saveJson(join(this.directory, 'collections', collectionId + '.json'), collection);
       return record;
+    });
+  }
+
+  // Add the explanation derived from one acquisition. Records are keyed by
+  // their own map receipt and position, so the same entry is idempotent while
+  // another revision of a same-named file adds its own records instead of
+  // overwriting the earlier one. Manual records are never modified, and
+  // neither are archived bytes; older interpretation records stay queryable.
+  async integrate(collectionId, result) {
+    identifier(collectionId);
+    return this.serialized(async () => {
+      const collection = await this.collection(collectionId);
+      for (const receiptId of result.receiptIds) {
+        if (!collection.receiptIds.includes(receiptId)) collection.receiptIds.push(receiptId);
+      }
+      const known = new Set(collection.records.map(record => record.key));
+      for (const record of result.records) {
+        if (known.has(record.key)) continue;
+        known.add(record.key);
+        collection.records.push({ ...record, automatic: true });
+      }
+      // Explanations are kept per entry so that re-acquiring one entry replaces
+      // its own summary without hiding another entry's gap.
+      const previous = collection.explanation?.acquisitions || [];
+      const acquisitions = previous.filter(item => item.entry !== result.explanation.entry);
+      acquisitions.push(result.explanation);
+      collection.explanation = mergeExplanations(acquisitions);
+      collection.issues = collection.explanation.issues;
+      await this.saveJson(join(this.directory, 'collections', collectionId + '.json'), collection);
+      return collection;
     });
   }
 
